@@ -5,12 +5,15 @@
 
 #include "parser.hpp"
 
+using namespace std;
+
 %}
+%option yylineno
 
 constante       [a-z][a-zA-Z0-9_]*
 variable        [A-Z][a-zA-Z0-9_]*
 num_const       [0-9]+
-string          (\"(\"|[^"])*\")|(\'(\'|[^'])*\')
+string          (\"(\\\"|[^"])*\")|('(\\'|[^'])*')
 comment         (%.*|"/*"([^*]|"*"[^/])*"*/")
 
 
@@ -42,7 +45,11 @@ comment         (%.*|"/*"([^*]|"*"[^/])*"*/")
                     std::cout << "Commentaires" << std::endl;
                 }
 
-"_"             return (ANON_VAR);
+"\\+"           return (NOT);
+"_"{variable}?  {
+                        yylval = strdup(yytext);
+                        return (ANON_VAR);
+                }
 ","             return (CONJONCTION);
 ";"             return (DISJONCTION);
 "."             return (POINT);
@@ -63,13 +70,14 @@ comment         (%.*|"/*"([^*]|"*"[^/])*"*/")
 ">="            return (GTE);
 "<"             return (LT);
 ">"             return (GT);
-"!="            return (NE);
+"\\="           return (NE);
 
 "("             return (P_L);
 ")"             return (P_R);
-"[\n\r]"        ;
+\n              {}
+\r              {}
 " "             ;
-"\t"            ;
+\t              ;
 .               {std::cout << "Unkown character '" << yytext << "', " << (int)yytext[0] << std::endl;}
 
 %%

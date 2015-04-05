@@ -4,7 +4,7 @@ void save_to_dot(const string & path, vector<regle*> & faits, vector<regle*> reg
     ofstream    of(path);
     int         cluster_count = 0;
     regex       quotes("\"|\'");
-    regex       coma(",");
+    string      quote_replace("\\$&");
 
     if (!of) {
         cout << "Erreur d'ouverture du fichier";
@@ -19,7 +19,7 @@ void save_to_dot(const string & path, vector<regle*> & faits, vector<regle*> reg
             "\t\tlabel=\"Faits\";\n";
     for (regle* r: faits) {
         //on échappe les quotes
-        of <<   "\t\t\"" << regex_replace(r->tete->to_string(), quotes, "\\$&") << "\";\n";
+        of <<   "\t\t\"" << regex_replace(r->tete->to_string(), quotes, quote_replace) << "\";\n";
     }
     of <<   "\t}\n";
 
@@ -40,7 +40,7 @@ void save_to_dot(const string & path, vector<regle*> & faits, vector<regle*> reg
             ostringstream os;
             os << "r" << cluster_count << "_" << r->tete->predicat << "_" << a->id() << "(" << termes << ")";
 
-            p_gauche.push_back(make_pair(regex_replace(os.str(), quotes, "\\$&"), a->id()));
+            p_gauche.push_back(make_pair(regex_replace(os.str(), quotes, quote_replace), a->id()));
 
             of << "\t\t\"" << p_gauche.back().first << "\";\n";
         }
@@ -56,7 +56,7 @@ void save_to_dot(const string & path, vector<regle*> & faits, vector<regle*> reg
                     bool          alone = true;
                     ostringstream os2;
                     os2 << "r" << cluster_count << "_" << a1->predicat << "_" << b->id() << "(" << termes << ")";
-                    string p_droite = regex_replace(os2.str(), quotes, "\\$&");
+                    string p_droite = regex_replace(os2.str(), quotes, quote_replace);
 
                     for (pair<string, string> p: p_gauche) {
                         if (b->id() == p.second) {
@@ -93,7 +93,7 @@ void save_to_dot(const string & path, vector<regle*> & faits, vector<regle*> reg
                         ostringstream os;
                         os << "r" << cluster_count << "_" << a1->predicat << "_" << b->id() << "(" << termes << ")";
 
-                        of << "\t\t\"" << regex_replace(os.str(), quotes, "\\$&") << "\"-> ⊥;\n";
+                        of << "\t\t\"" << regex_replace(os.str(), quotes, quote_replace) << "\"-> ⊥;\n";
                     }
 
                 }

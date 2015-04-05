@@ -64,7 +64,7 @@ public:
     string              to_string() const {
         ostringstream os;
 
-        os << predicat;
+        os << (negatif ? "¬" : "") << predicat;
 
         if (termes && arite() > 0) {
             os << "(";

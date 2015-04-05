@@ -1,0 +1,1 @@
+famille(1).femme(titi).homme("toto").parent(X,Y) :- enfant(Y,X).pere(X) :- parent(X, Y), homme(X).famille(Y ) :- nbfamille(Z), famille(X), Y = X + 1, Y <= Z.%Il est posible de melanger des variables avec des constantes pour un meme predicat comme par exemple ::- marie(X,titi), femme(X).pere(X,Y) :- parent(X,Y), not femme(X).

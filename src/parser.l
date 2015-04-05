@@ -1,5 +1,4 @@
 %{
-#include "global.hpp"
 #include <cstdio>
 #include <iostream>
 
@@ -14,40 +13,41 @@ constante       [a-z][a-zA-Z0-9_]*
 variable        [A-Z][a-zA-Z0-9_]*
 num_const       [0-9]+
 string          (\"(\\\"|[^"])*\")|('(\\'|[^'])*')
-comment         (%.*|"/*"([^*]|"*"[^/])*"*/")
+comment         (%[^\n\r]*)|("/*"([^*]|"*"[^/])*"*/")
 
 
 %%
 
 "is"            return (IS);
+"not"           return (NOT);
 
 {constante}     {
-                        yylval = strdup(yytext);
+                        yylval.chaine = strdup(yytext);
                         return (CONSTANTE);
                 }
 
 {variable}      {
-                        yylval = strdup(yytext);
+                        yylval.chaine = strdup(yytext);
                         return (VARIABLE);
                 }
 
 {num_const}     {
-                        yylval = strdup(yytext);
+                        yylval.num = stoi(yytext);
                         return (NUM_CONST);
                 }
 
 {string}        {
-                        yylval = strdup(yytext);
+                        yylval.chaine = strdup(yytext);
                         return (STRING);
                 }
 
 {comment}       {
-                    std::cout << "Commentaires" << std::endl;
+                        std::cout << "Commentaires : \n" << yytext << "\nFin commentaires" << std::endl << std::endl;
                 }
 
 "\\+"           return (NOT);
 "_"{variable}?  {
-                        yylval = strdup(yytext);
+                        yylval.chaine = strdup(yytext);
                         return (ANON_VAR);
                 }
 ","             return (CONJONCTION);

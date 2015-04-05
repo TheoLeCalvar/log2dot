@@ -1,18 +1,18 @@
 CC=clang++
 
 ifdef DEBUG
-CFLAGS=-g -DDEBUG -Wall
+CFLAGS=-g -DDEBUG -Wall -W
 else
-CFLAGS=-O3 -Wall -Wno-format
+CFLAGS=-O3 -Wall -W
 endif
 LDFLAGS=-L/usr/local/opt/flex/lib
-CFLAGS=-I/usr/local/opt/flex/include
+CFLAGS += -I/usr/local/opt/flex/include -std=c++11 -Wno-deprecated-register
 
 ## Directories
 DOBJ=obj
 DSRC=src
 
-SRCS= parser.lex.cpp parser.cpp
+SRCS= parser.lex.cpp parser.cpp toDot.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

@@ -104,6 +104,8 @@ regle:
 
         $$ = r;
 
+        delete $3;
+
         regles.push_back(r);
 
         cout << "une règle" << endl << *r << endl << endl;
@@ -115,6 +117,8 @@ regle:
         r->corps = $2->t;
 
         $$ = r;
+
+        delete $2;
 
         contraintes.push_back(r);
 
@@ -357,7 +361,7 @@ atome_corps:
 
         $$ = $2;
 
-        cout << "atome négatif ¬" << *$$ << endl;
+        cout << "atome négatif " << *$$ << endl;
     }
 
 tete:
@@ -368,6 +372,8 @@ tete:
         a->termes = $3->t;
 
         cout << *a << endl;
+
+        delete $3;
 
         $$ = a;
         cout << "La tête ! " << *a << endl;
@@ -380,6 +386,7 @@ tete:
 
         cout << *a << endl;
 
+        delete $3;
 
         $$ = a;
         cout << "tête avec une string et des arguments " << *a << endl;

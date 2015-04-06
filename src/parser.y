@@ -197,6 +197,8 @@ atome:
         a->termes = $3->t;
         $$ = a;
 
+        delete $1;
+
         cout << "Et bien ça c'est un joli atome " << *a << endl;
     }
     | STRING P_L atomes P_R
@@ -206,9 +208,11 @@ atome:
         a->termes = $3->t;
         $$ = a;
 
+        delete $1;
+
         cout << "une string qui est avec des () ! " << *a << endl;
     }
-    | P_L atomes P_R              {cout << "Des constantes entre parenthèses :o A traiter " << $2 << endl;}
+    | P_L atomes P_R              {cout << "Des constantes entre parenthèses :o A traiter " << $2 << endl; delete $2;}
     | NUM_CONST
     {
         atome_num* a = new atome_num;
@@ -232,6 +236,7 @@ atome:
         a->predicat = $1;
 
         $$ = a;
+        delete $1;
         cout << "un prédicat d'arité 0 " << *a << endl;
     }
     | STRING
@@ -240,6 +245,7 @@ atome:
         a->predicat = $1;
 
         $$ = a;
+        delete $1;
         cout << "chaîne de caractères, une constante :) " << *a << endl;
     }
     | VARIABLE
@@ -248,6 +254,7 @@ atome:
         a->nom = $1;
 
         $$ = a;
+        delete $1;
         cout << "Une variable " << *a << endl;
     }
     | ANON_VAR
@@ -256,13 +263,14 @@ atome:
         a->nom = $1;
 
         $$ = a;
+        delete $1;
         cout << "Variable anonyme " << *a << endl;
     }
     | liste                       {cout << "une liste " << $1 << endl;}
 
 atome_corps:
     atome                               {$$ = $1;}
-    | VARIABLE ASSIGN atome             {cout << "Une assignation de variable, à traiter !" << $1 << "=" << $3 << endl;}
+    | VARIABLE ASSIGN atome             {cout << "Une assignation de variable, à traiter !" << $1 << "=" << $3 << endl; delete $1;}
     | VARIABLE NE arit_exp
     {
         atome_arithmetique *a = new atome_arithmetique;
@@ -274,6 +282,8 @@ atome_corps:
         a->m_droit = $3;
 
         $$ = a;
+
+        delete $1;
 
         cout << "Contrainte de différence " << *a << endl;
     }
@@ -288,6 +298,9 @@ atome_corps:
         a->m_droit = $3;
 
         $$ = a;
+
+        delete $1;
+
         cout << "Contrainte d'infériorité stricte " << *a << endl;
     }
     | VARIABLE LTE arit_exp
@@ -301,6 +314,9 @@ atome_corps:
         a->m_droit = $3;
 
         $$ = a;
+
+
+        delete $1;
         cout << "Contrainte d'infériorité " << *a << endl;
     }
     | VARIABLE GT arit_exp
@@ -314,6 +330,9 @@ atome_corps:
         a->m_droit = $3;
 
         $$ = a;
+
+
+        delete $1;
         cout << "Contrainte de supériorité stricte " << *a << endl;
     }
     | VARIABLE GTE arit_exp
@@ -327,6 +346,9 @@ atome_corps:
         a->m_droit = $3;
 
         $$ = a;
+
+
+        delete $1;
         cout << "Contrainte de supériorité " << *a << endl;
     }
     | VARIABLE ASSIGN arit_exp
@@ -340,6 +362,9 @@ atome_corps:
         a->m_droit = $3;
 
         $$ = a;
+
+
+        delete $1;
         cout << "assignation " << *a << endl;
     }
     | VARIABLE IS arit_exp
@@ -353,6 +378,9 @@ atome_corps:
         a->m_droit = $3;
 
         $$ = a;
+
+
+        delete $1;
         cout << "une expression arithmétique" << *a << endl;
     }
     | NOT atome
@@ -374,6 +402,7 @@ tete:
         cout << *a << endl;
 
         delete $3;
+        delete $1;
 
         $$ = a;
         cout << "La tête ! " << *a << endl;
@@ -387,6 +416,7 @@ tete:
         cout << *a << endl;
 
         delete $3;
+        delete $1;
 
         $$ = a;
         cout << "tête avec une string et des arguments " << *a << endl;
@@ -398,6 +428,8 @@ tete:
 
         cout << *a << endl;
 
+        delete $1;
+
         $$ = a;
         cout << "Symbole de tête " << *a << endl;
     }
@@ -408,13 +440,15 @@ tete:
 
         cout << *a << endl;
 
+        delete $1;
+
         $$ = a;
         cout << "Tete avec une string " << *a << endl;
     }
 
 liste:
     B_L B_R                       {cout << "Liste vide" << endl;}
-    | B_L atomes B_R              {cout << "Le contenu d'une liste" << endl;}
+    | B_L atomes B_R              {cout << "Le contenu d'une liste" << endl; delete $2;}
     | B_L atome LIST_SEP liste B_R {cout << "une liste dans une liste Oo" << endl;}
     | B_L atome LIST_SEP VARIABLE B_R {cout << "une liste concaténée à une liste Oo" << endl;}
     | atome LIST_SEP atome        {cout << "liste concaténée à autre liste, mais sans les braquets" << endl;}
@@ -465,6 +499,8 @@ arit_exp:
         at->nom = $1;
 
         ar->var = at;
+
+        delete $1;
 
         $$ = ar;
         cout << "var dans exp : " << *ar << endl;

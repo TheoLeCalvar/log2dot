@@ -535,14 +535,14 @@ int main(int argc, char ** argv) {
 
     save_to_dot(argv[2], faits, regles, contraintes);
 
-    /*for (regle* r: faits)
+    for (regle* r: faits)
         delete r;
 
     for (regle* r: regles)
         delete r;
 
     for (regle* r: contraintes)
-        delete r;*/
+        delete r;
 
     return 0;
 }

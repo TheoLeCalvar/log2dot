@@ -16,10 +16,15 @@ public:
     regle():tete(nullptr), corps(nullptr) {}
 
     virtual ~regle() {
-        for (atome* i: *corps)
-            delete i;
+        if (corps) {
+            for (atome* i: *corps)
+                delete i;
 
-        delete corps;
+            delete corps;
+        }
+
+        if (tete)
+            delete tete;
     }
 
     string          to_string() const {

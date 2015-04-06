@@ -53,10 +53,12 @@ public:
     vector<atome*>*  termes;
     atome_predicat():termes(nullptr){}
     virtual ~atome_predicat() {
-        for (auto t: *termes)
-            delete t;
+        if (termes) {
+            for (auto t: *termes)
+                delete t;
 
-        delete termes;
+            delete termes;
+        }
     }
 
     size_t              arite() const{return termes->size();}

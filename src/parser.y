@@ -450,7 +450,7 @@ liste:
     B_L B_R                       {cout << "Liste vide" << endl;}
     | B_L atomes B_R              {cout << "Le contenu d'une liste" << endl; delete $2;}
     | B_L atome LIST_SEP liste B_R {cout << "une liste dans une liste Oo" << endl;}
-    | B_L atome LIST_SEP VARIABLE B_R {cout << "une liste concaténée à une liste Oo" << endl;}
+    | B_L atome LIST_SEP VARIABLE B_R {cout << "une liste concaténée à une liste Oo" << endl; delete $4;}
     | atome LIST_SEP atome        {cout << "liste concaténée à autre liste, mais sans les braquets" << endl;}
 
 arit_exp:

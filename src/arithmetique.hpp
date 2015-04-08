@@ -14,6 +14,8 @@ public:
         MOINS,
         FOIS,
         DIVISE,
+        ASSIGN,
+        PARENTHESE,
         NONE
     } op_e;
 
@@ -34,7 +36,7 @@ public:
 
         if (num)
             os << *num;
-        else
+        else if (var)
             os << *var;
 
         switch (operation) {
@@ -54,13 +56,25 @@ public:
                 os << " / ";
                 break;
 
+            case ASSIGN:
+                os << " = ";
+                break;
+
+            case PARENTHESE:
+                os << " ( ";
+                break;
+
             case NONE:
                 os << " ";
                 break;
+
         }
 
         if (m_droit)
             os << *m_droit;
+
+        if (operation == PARENTHESE)
+            os << " ) ";
 
         return os.str();
     }

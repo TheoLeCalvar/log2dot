@@ -31,26 +31,44 @@ public:
     latome() {l = new list<atome*>;}
 };
 
+
+
 extern "C" void yyerror(const char *s);
 
 %}
 
 %code requires {
     class atome;
+    class atome_predicat;
+    class atome_num;
+    class atome_var;
     class arithmetique;
     class vatome;
     class latome;
     class regle;
+    typedef enum {
+        op_GT,
+        op_GTE,
+        op_LT,
+        op_LTE,
+        op_EQ,
+        op_NEQ,
+        op_NONE
+    } op_comp;
 }
 
 %union{
     char*           chaine;
     int             num;
     atome*          patome;
+    atome_predicat *patome_pred;
+    atome_num*      patome_num;
+    atome_var*      patome_var;
     class vatome*   patomes;
     arithmetique*   parit;
     class latome*   plist;
     regle*          pregle;
+    op_comp         op;
 }
 
 %token<chaine>  CONSTANTE VARIABLE STRING ANON_VAR
@@ -61,16 +79,16 @@ extern "C" void yyerror(const char *s);
 %token P_R P_L B_R B_L
 %token IS
 
-%left PLUS MOINS
-%left FOIS DIVISE
 
-%left IS ASSIGN
-
-%type<patome>    atome atome_corps tete;
-%type<patomes>   atomes atomes_corps;
-%type<parit>     arit_exp;
-%type<plist>     liste;
+%type<patome>    atome atome_corps comparaison;
+%type<patome_pred>  tete function constante;
+%type<patome_num>   nombre;
+%type<patome_var>   variable;
+%type<patomes>   corps_disjonctif corps_conjonctif termes;
+%type<parit>     arit_exp arit_exp_2 arit_exp_3;
 %type<pregle>    regle;
+%type<op>       comparaison_operateur;
+/*%type<plist>     liste;*/
 
 %start input
 
@@ -95,7 +113,7 @@ regle:
         cout << "un fait." << endl << *r << endl << endl;
 
     }
-    | tete SI atomes_corps POINT
+    | tete SI corps_disjonctif POINT
     {
         regle * r = new regle();
 
@@ -110,7 +128,7 @@ regle:
 
         cout << "une règle" << endl << *r << endl << endl;
     }
-    | SI atomes_corps POINT
+    | SI corps_disjonctif POINT
     {
         regle * r = new regle();
 
@@ -131,53 +149,30 @@ regle:
         $$ = nullptr;
     }
 
-atomes:
-    atomes CONJONCTION atome
+corps_disjonctif:
+    corps_conjonctif DISJONCTION corps_disjonctif
     {
 
+        for (auto i: *$3->t) {
+            $1->t->push_back(i);
+        }
+
+        delete $3;
+
+        $$ = $1;
+
+        cout << "Disjonction d'atomes (traité comme une conjontion pour l'instant) " << endl;
+    }
+    | corps_conjonctif
+
+corps_conjonctif:
+    corps_conjonctif CONJONCTION atome_corps
+    {
         $1->t->push_back($3);
 
         $$ = $1;
 
-        cout << "Conjonction d'atomes : " << *$3 << endl;
-    }
-    | atomes DISJONCTION atome
-    {
-
-        $1->t->push_back($3);
-
-        $$ = $1;
-
-        cout << "Disjonction d'atomes (traité comme une conjontion pour l'instant) " << *$3 << endl;
-    }
-    | atome
-    {
-        vatome *  atomes = new vatome();
-        atomes->t->push_back($1);
-
-        $$ = atomes;
-
-        cout << "Un atome tout seul " << *$1 << endl;
-    }
-
-atomes_corps:
-    atomes_corps CONJONCTION atome_corps
-    {
-
-        $1->t->push_back($3);
-
-        $$ = $1;
-
-        cout << "Conjonction d'atomes corps" << endl;
-    }
-    | atomes_corps DISJONCTION atome_corps
-    {
-
-        $1->t->push_back($3);
-
-        $$ = $1;
-
-        cout << "Disjonction d'atomes (traité comme une conjontion pour l'instant) corps " << *$3 << endl;
+        cout << "Conjonction d'atomes " << *$3 << endl;
     }
     | atome_corps
     {
@@ -186,34 +181,73 @@ atomes_corps:
 
         $$ = atomes;
 
-        cout << "Un atome tout seul corps " << *$1 << endl;
+        cout << "Un atome tout seul " << *$1 << endl;
+    }
+    | P_L corps_disjonctif P_R              {cout << "C'est pas traiter" << endl;}
+
+function:
+    constante
+    {
+        $$ = $1;
+
+        cout << "Prédicat d'arité 0 " << *$1 << endl;
+    }
+    | constante P_L termes P_R
+    {
+        $1->termes = $3->t;
+
+        $$ = $1;
+
+        cout << "On a trouvé un prédicat de fonciton " << *$1 << endl;
     }
 
-atome:
-    CONSTANTE P_L atomes P_R
+constante:
+    CONSTANTE
     {
         atome_predicat * a = new atome_predicat;
+
         a->predicat = $1;
-        a->termes = $3->t;
-        $$ = a;
 
         delete $1;
 
-        cout << "Et bien ça c'est un joli atome " << *a << endl;
+        $$ = a;
+
+        cout << "Une constante " << *a << endl;
     }
-    | STRING P_L atomes P_R
+    | STRING
     {
         atome_predicat * a = new atome_predicat;
+
         a->predicat = $1;
-        a->termes = $3->t;
-        $$ = a;
 
         delete $1;
 
-        cout << "une string qui est avec des () ! " << *a << endl;
+        $$ = a;
+
+        cout << "Une constante " << *a << endl;
     }
-    | P_L atomes P_R              {cout << "Des constantes entre parenthèses :o A traiter " << $2 << endl; delete $2;}
-    | NUM_CONST
+
+termes:
+    atome
+    {
+        vatome *  atomes = new vatome();
+        atomes->t->push_back($1);
+
+        $$ = atomes;
+
+        cout << "Un terme tout seul " << *$1 << endl;
+    }
+    | termes CONJONCTION atome
+    {
+        $1->t->push_back($3);
+
+        $$ = $1;
+
+        cout << "Un atome dans un terme " << *$3 << endl;
+    }
+
+nombre:
+    NUM_CONST
     {
         atome_num* a = new atome_num;
         a->valeur = $1;
@@ -230,25 +264,9 @@ atome:
         $$ = a;
         cout << "constante numérique négative ! -" << *a << endl;
     }
-    | CONSTANTE
-    {
-        atome_predicat * a = new atome_predicat;
-        a->predicat = $1;
 
-        $$ = a;
-        delete $1;
-        cout << "un prédicat d'arité 0 " << *a << endl;
-    }
-    | STRING
-    {
-        atome_predicat * a = new atome_predicat;
-        a->predicat = $1;
-
-        $$ = a;
-        delete $1;
-        cout << "chaîne de caractères, une constante :) " << *a << endl;
-    }
-    | VARIABLE
+variable:
+    VARIABLE
     {
         atome_var * a = new atome_var;
         a->nom = $1;
@@ -266,123 +284,23 @@ atome:
         delete $1;
         cout << "Variable anonyme " << *a << endl;
     }
-    | liste                       {cout << "une liste " << $1 << endl;}
+
+tete:
+    function
+    {
+        $$ = $1;
+
+        cout << "On a trouvé une tête " << *$1 << endl;
+    }
+
+atome:
+    function                        {$$ = $1;}
+    | nombre                        {$$ = $1;}
+    | variable                      {$$ = $1;}
+    // | liste                         {cout << "une liste " << endl; $$ = nullptr;}
 
 atome_corps:
-    atome                               {$$ = $1;}
-    | VARIABLE ASSIGN atome             {cout << "Une assignation de variable, à traiter !" << $1 << "=" << $3 << endl; delete $1;}
-    | VARIABLE NE arit_exp
-    {
-        atome_arithmetique *a = new atome_arithmetique;
-        atome_var * at = new atome_var;
-        at->nom = $1;
-
-        a->op = atome_arithmetique::NEQ;
-        a->m_gauche = at;
-        a->m_droit = $3;
-
-        $$ = a;
-
-        delete $1;
-
-        cout << "Contrainte de différence " << *a << endl;
-    }
-    | VARIABLE LT arit_exp
-    {
-        atome_arithmetique *a = new atome_arithmetique;
-        atome_var * at = new atome_var;
-        at->nom = $1;
-
-        a->op = atome_arithmetique::LT;
-        a->m_gauche = at;
-        a->m_droit = $3;
-
-        $$ = a;
-
-        delete $1;
-
-        cout << "Contrainte d'infériorité stricte " << *a << endl;
-    }
-    | VARIABLE LTE arit_exp
-    {
-        atome_arithmetique *a = new atome_arithmetique;
-        atome_var * at = new atome_var;
-        at->nom = $1;
-
-        a->op = atome_arithmetique::LTE;
-        a->m_gauche = at;
-        a->m_droit = $3;
-
-        $$ = a;
-
-
-        delete $1;
-        cout << "Contrainte d'infériorité " << *a << endl;
-    }
-    | VARIABLE GT arit_exp
-    {
-        atome_arithmetique *a = new atome_arithmetique;
-        atome_var * at = new atome_var;
-        at->nom = $1;
-
-        a->op = atome_arithmetique::GT;
-        a->m_gauche = at;
-        a->m_droit = $3;
-
-        $$ = a;
-
-
-        delete $1;
-        cout << "Contrainte de supériorité stricte " << *a << endl;
-    }
-    | VARIABLE GTE arit_exp
-    {
-        atome_arithmetique *a = new atome_arithmetique;
-        atome_var * at = new atome_var;
-        at->nom = $1;
-
-        a->op = atome_arithmetique::GTE;
-        a->m_gauche = at;
-        a->m_droit = $3;
-
-        $$ = a;
-
-
-        delete $1;
-        cout << "Contrainte de supériorité " << *a << endl;
-    }
-    | VARIABLE ASSIGN arit_exp
-    {
-        atome_arithmetique *a = new atome_arithmetique;
-        atome_var * at = new atome_var;
-        at->nom = $1;
-
-        a->op = atome_arithmetique::EQ;
-        a->m_gauche = at;
-        a->m_droit = $3;
-
-        $$ = a;
-
-
-        delete $1;
-        cout << "assignation " << *a << endl;
-    }
-    | VARIABLE IS arit_exp
-    {
-        atome_arithmetique *a = new atome_arithmetique;
-        atome_var * at = new atome_var;
-        at->nom = $1;
-
-        a->op = atome_arithmetique::EQ;
-        a->m_gauche = at;
-        a->m_droit = $3;
-
-        $$ = a;
-
-
-        delete $1;
-        cout << "une expression arithmétique" << *a << endl;
-    }
+    atome                             {$$ = $1;}
     | NOT atome
     {
         $2->negatif = true;
@@ -391,72 +309,53 @@ atome_corps:
 
         cout << "atome négatif " << *$$ << endl;
     }
+    | comparaison                         {$$ = $1;}
 
-tete:
-    CONSTANTE P_L atomes P_R
-    {
-        atome_predicat * a = new atome_predicat;
-        a->predicat = $1;
-        a->termes = $3->t;
-
-        cout << *a << endl;
-
-        delete $3;
-        delete $1;
-
-        $$ = a;
-        cout << "La tête ! " << *a << endl;
-    }
-    | STRING P_L atomes P_R
-    {
-        atome_predicat * a = new atome_predicat;
-        a->predicat = $1;
-        a->termes = $3->t;
-
-        cout << *a << endl;
-
-        delete $3;
-        delete $1;
-
-        $$ = a;
-        cout << "tête avec une string et des arguments " << *a << endl;
-    }
-    | CONSTANTE
-    {
-        atome_predicat * a = new atome_predicat;
-        a->predicat = $1;
-
-        cout << *a << endl;
-
-        delete $1;
-
-        $$ = a;
-        cout << "Symbole de tête " << *a << endl;
-    }
-    | STRING
-    {
-        atome_predicat * a = new atome_predicat;
-        a->predicat = $1;
-
-        cout << *a << endl;
-
-        delete $1;
-
-        $$ = a;
-        cout << "Tete avec une string " << *a << endl;
-    }
-
+/*
 liste:
     B_L B_R                       {cout << "Liste vide" << endl;}
     | B_L atomes B_R              {cout << "Le contenu d'une liste" << endl; delete $2;}
     | B_L atome LIST_SEP liste B_R {cout << "une liste dans une liste Oo" << endl;}
     | B_L atome LIST_SEP VARIABLE B_R {cout << "une liste concaténée à une liste Oo" << endl; delete $4;}
     | atome LIST_SEP atome        {cout << "liste concaténée à autre liste, mais sans les braquets" << endl;}
+*/
+
+comparaison_operateur:
+    NE      {$$ = op_NEQ;}
+    | IS    {$$ = op_EQ;}
+    | EQ    {$$ = op_EQ;}
+    | GT    {$$ = op_GT;}
+    | GTE   {$$ = op_GTE;}
+    | LT    {$$ = op_LT;}
+    | LTE   {$$ = op_LTE;}
+
+comparaison:
+    arit_exp comparaison_operateur arit_exp
+    {
+        atome_arithmetique *a = new atome_arithmetique;
+
+        a->op = $2;
+        a->m_gauche = $1;
+        a->m_droit = $3;
+
+        $$ = a;
+
+        cout << "Comparaison " << *a << endl;
+    }
+    | arit_exp
+    {
+        atome_arithmetique *a = new atome_arithmetique;
+
+        a->m_droit = $1;
+
+        $$ = a;
+
+        cout << "Une expression arithmétique seule " << *a << endl;
+    }
 
 arit_exp:
-    arit_exp PLUS arit_exp
+    arit_exp PLUS arit_exp_2
     {
-
         $1->operation = arithmetique::PLUS;
         $1->m_droit = $3;
 
@@ -464,70 +363,78 @@ arit_exp:
 
         cout << "addition dans exp : " << *$$ << endl;
     }
-    | arit_exp FOIS arit_exp
+    | arit_exp MOINS arit_exp_2
     {
-
-        $1->operation = arithmetique::FOIS;
+        $1->operation = arithmetique::MOINS;
         $1->m_droit = $3;
 
         $$ = $1;
-        cout << "multiplication dans exp : " << *$$ << endl;
+        cout << "soustraction dans exp : " << *$$ << endl;
     }
-    | arit_exp DIVISE arit_exp
+    | arit_exp ASSIGN arit_exp_2
     {
+        $1->operation = arithmetique::ASSIGN;
+        $1->m_droit = $3;
 
+        $$ = $1;
+        cout << "assignation dans exp : " << *$$ << endl;
+    }
+    | arit_exp_2
+    {
+        $$ = $1;
+    }
+
+arit_exp_2:
+    arit_exp_2 DIVISE arit_exp_3
+    {
         $1->operation = arithmetique::DIVISE;
         $1->m_droit = $3;
 
         $$ = $1;
         cout << "division dans exp : " << *$$ << endl;
     }
-    | arit_exp MOINS arit_exp
+    | arit_exp_2 FOIS arit_exp_3
     {
-
-        $1->operation = arithmetique::MOINS;
+        $1->operation = arithmetique::FOIS;
         $1->m_droit = $3;
 
         $$ = $1;
-        cout << "moins dans exp : " << *$$ << endl;
+        cout << "multiplication dans exp : " << *$$ << endl;
     }
-    | VARIABLE
+    | arit_exp_3
+    {
+        $$ = $1;
+    }
+
+arit_exp_3:
+    variable
     {
         arithmetique * ar = new arithmetique;
 
-        atome_var * at = new atome_var;
-        at->nom = $1;
-
-        ar->var = at;
-
-        delete $1;
+        ar->var = $1;
 
         $$ = ar;
         cout << "var dans exp : " << *ar << endl;
     }
-    | NUM_CONST
+    | nombre
     {
         arithmetique * ar = new arithmetique;
 
-        atome_num * at = new atome_num;
-        at->valeur = $1;
-
-        ar->num = at;
+        ar->num = $1;
 
         $$ = ar;
         cout << "const dans exp : " << *ar << endl;
     }
-    | MOINS NUM_CONST
+    | P_L arit_exp P_R
     {
         arithmetique * ar = new arithmetique;
+        ar->m_droit = $2;
 
-        atome_num * at = new atome_num;
-        at->valeur = -1 * $2;
-
-        ar->num = at;
+        ar->operation = arithmetique::PARENTHESE;
 
         $$ = ar;
-        cout << "const négative dans exp : " << *ar << endl;
+
+        cout << "des () dans une exp : " << *ar << endl;
     }
 
 

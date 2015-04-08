@@ -19,20 +19,25 @@ OBJS = $(SRCS:.cpp=.o)
 FLEX = flex
 FLEXFLAGS =
 BISON = /usr/local/Cellar/bison/3.0.4/bin/bison
-BISONFLAGS =
+BISONFLAGS = -v
 
 
 all: log2dot
+
+test: log2dot
+	../log2dot ../exemple.pl ../exemple.dot
+	dot -Tpng ../exemple.dot -o ../out.png
+	open ../out.png
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $^
 
 log2dot: $(OBJS)
-	$(CC) $^ $(CFLAGS) $(LDFLAGS) -lfl -o log2dot
+	$(CC) $^ $(CFLAGS) $(LDFLAGS) -lfl -o ../log2dot
 
 clean:
 	rm -f *.o
-	rm -f log2dot
+	rm -f ../log2dot
 
 distclean: clean
 	rm -f parser.lex.hpp parser.lex.cpp

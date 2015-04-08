@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <vector>
+#include "parser.hpp"
 
 using namespace std;
 
@@ -107,20 +108,13 @@ ostream & operator<<(ostream & os, const arithmetique & a);
 
 class atome_arithmetique: public atome {
 public:
-    typedef enum {
-        GT,
-        GTE,
-        LT,
-        LTE,
-        EQ,
-        NEQ
-    } op_comp;
 
-    atome_var *         m_gauche;
+
+    arithmetique *      m_gauche;
     op_comp             op;
     arithmetique *      m_droit;
 
-    atome_arithmetique():m_gauche(nullptr), op(EQ), m_droit(nullptr) {}
+    atome_arithmetique():m_gauche(nullptr), op(op_NONE), m_droit(nullptr) {}
     ~atome_arithmetique() {
         if (m_gauche) delete m_gauche;
         if (m_droit) delete m_droit;
@@ -129,44 +123,48 @@ public:
     string  to_string() const {
         ostringstream os;
 
-        if (m_gauche && m_droit) {
+        if (m_gauche)
             os << *m_gauche;
 
-            switch (op) {
-                case GT:
-                    os << " > ";
-                    break;
+        switch (op) {
+            case op_GT:
+                os << " > ";
+                break;
 
-                case GTE:
-                    os << ' >= ';
-                    break;
+            case op_GTE:
+                os << ' >= ';
+                break;
 
-                case LT:
-                    os << " < ";
-                    break;
+            case op_LT:
+                os << " < ";
+                break;
 
-                case LTE:
-                    os << " <= ";
-                    break;
+            case op_LTE:
+                os << " <= ";
+                break;
 
-                case EQ:
-                    os << " = ";
-                    break;
+            case op_EQ:
+                os << " = ";
+                break;
 
-                case NEQ:
-                    os << " \\= ";
-                    break;
+            case op_NEQ:
+                os << " \\= ";
+                break;
 
-            }
+            case op_NONE:
+                os << " ";
+                break;
 
-            os << *m_droit;
         }
+
+        if (m_droit)
+            os << *m_droit;
 
         return os.str();
     }
 
     virtual string  id() const {
-        return m_gauche->id();
+        return "non sens";
     }
 };
 

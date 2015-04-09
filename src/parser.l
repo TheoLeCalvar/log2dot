@@ -55,6 +55,9 @@ comment         (%[^\n\r]*)|("/*"([^*]|"*"[^/])*"*/")
 "."             return (POINT);
 ":-"            return (SI);
 
+"("             return (P_L);
+")"             return (P_R);
+
 "["             return (B_L);
 "]"             return (B_R);
 "|"             return (LIST_SEP);
@@ -72,8 +75,6 @@ comment         (%[^\n\r]*)|("/*"([^*]|"*"[^/])*"*/")
 ">"             return (GT);
 "\\="           return (NE);
 
-"("             return (P_L);
-")"             return (P_R);
 \n              {}
 \r              {}
 " "             ;

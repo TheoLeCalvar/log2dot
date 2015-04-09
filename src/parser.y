@@ -90,6 +90,8 @@ extern "C" void yyerror(const char *s);
 %type<op>       comparaison_operateur;
 /*%type<plist>     liste;*/
 
+%left CONJONCTION
+
 %start input
 
 %%
@@ -164,15 +166,22 @@ corps_disjonctif:
         cout << "Disjonction d'atomes (traité comme une conjontion pour l'instant) " << endl;
     }
     | corps_conjonctif
+    {
+        $$ = $1;
+    }
 
 corps_conjonctif:
-    corps_conjonctif CONJONCTION atome_corps
+    corps_conjonctif CONJONCTION corps_conjonctif
     {
-        $1->t->push_back($3);
+        for (auto i: *$3->t) {
+            $1->t->push_back(i);
+        }
+
+        delete $3;
 
         $$ = $1;
 
-        cout << "Conjonction d'atomes " << *$3 << endl;
+        cout << "Conjonction d'atomes "  << endl;
     }
     | atome_corps
     {

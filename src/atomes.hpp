@@ -132,7 +132,7 @@ public:
                 break;
 
             case op_GTE:
-                os << ' >= ';
+                os << " >= ";
                 break;
 
             case op_LT:

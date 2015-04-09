@@ -150,7 +150,7 @@ regle:
     }
 
 corps_disjonctif:
-    corps_conjonctif DISJONCTION corps_disjonctif
+    corps_disjonctif DISJONCTION corps_conjonctif
     {
 
         for (auto i: *$3->t) {
@@ -183,7 +183,11 @@ corps_conjonctif:
 
         cout << "Un atome tout seul " << *$1 << endl;
     }
-    | P_L corps_disjonctif P_R              {cout << "C'est pas traiter" << endl;}
+    | P_L corps_disjonctif P_R
+    {
+        $$ = $2;
+        cout << "C'est pas traiter mais c'est des parenthèses dans la liste de termes" << endl;
+    }
 
 function:
     constante
@@ -310,6 +314,16 @@ atome_corps:
         cout << "atome négatif " << *$$ << endl;
     }
     | comparaison                         {$$ = $1;}
+    | arit_exp
+    {
+        atome_arithmetique *a = new atome_arithmetique;
+
+        a->m_droit = $1;
+
+        $$ = a;
+
+        cout << "Une expression arithmétique seule " << *a << endl;
+    }
 
 /*
 liste:
@@ -342,16 +356,7 @@ comparaison:
 
         cout << "Comparaison " << *a << endl;
     }
-    | arit_exp
-    {
-        atome_arithmetique *a = new atome_arithmetique;
 
-        a->m_droit = $1;
-
-        $$ = a;
-
-        cout << "Une expression arithmétique seule " << *a << endl;
-    }
 
 arit_exp:
     arit_exp PLUS arit_exp_2
